@@ -61,6 +61,26 @@ public final class Bootstrap {
 
     private static final Pattern PATH_PATTERN = Pattern.compile("(\".*?\")|(([^,])*)");
 
+    /**
+     * catalina.home和catalina.base这两个属性仅在你需要安装多个Tomcat实例而不想安装多个软件备份的时候使用，这样能节省磁盘空间。
+     * 以Tomcat8.0为例，其Tomcat目录结构如下：
+     * bin (运行脚本）
+     * conf (配置文件）
+     * lib (核心库文件）
+     * logs (日志目录)
+     * temp (临时目录)
+     * webapps (自动装载的应用程序的目录）
+     * work (JVM临时文件目录[java.io.tmpdir])
+     *
+     * 让我们看看这些目录那些可以被多个Tomcat实例公用:其实只有 bin 和 lib 目录,
+     * 其它目录conf、logs、temp、webapps和work每个Tomcat实例必须拥有其自己独立的备份。
+     * catalina.home指向公用信息的位置，就是bin和lib的父目录。
+     * catalina.base指向每个Tomcat目录私有信息的位置，就是conf、logs、temp、webapps和work的父目录。
+     *
+     * 仅运行一个Tomcat实例时，这两个属性指向的位置是相同的。
+     */
+
+    //在静态代码块中设置catalinaHome和catalinaBase两个路径
     static {
         // Will always be non-null
         String userDir = System.getProperty("user.dir");
@@ -103,11 +123,12 @@ public final class Bootstrap {
             }
         }
 
+        //设置catalinaHomeFile（tomcat安装目录）
         catalinaHomeFile = homeFile;
         System.setProperty(
                 Globals.CATALINA_HOME_PROP, catalinaHomeFile.getPath());
 
-        // Then base
+        //设置catalinaBaseFile（tomcat工作目录）
         String base = System.getProperty(Globals.CATALINA_BASE_PROP);
         if (base == null) {
             catalinaBaseFile = catalinaHomeFile;
@@ -161,7 +182,7 @@ public final class Bootstrap {
     private ClassLoader createClassLoader(String name, ClassLoader parent)
         throws Exception {
 
-        String value = CatalinaProperties.getProperty(name + ".loader");
+        String value = org.apache.catalina.startup.CatalinaProperties.getProperty(name + ".loader");
         if ((value == null) || (value.equals("")))
             return parent;
 
@@ -198,7 +219,7 @@ public final class Bootstrap {
             }
         }
 
-        return ClassLoaderFactory.createClassLoader(repositories, parent);
+        return org.apache.catalina.startup.ClassLoaderFactory.createClassLoader(repositories, parent);
     }
 
 
@@ -253,17 +274,21 @@ public final class Bootstrap {
      * @throws Exception Fatal initialization error
      */
     public void init() throws Exception {
-
+        //初始化类加载器
         initClassLoaders();
 
+        //当前线程设置上下文类加载器
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
+        //设置安全机制的类加载器
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
+        //加载Catalina类
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
+        //使用Catalina类的构造方法，创建Catalina实例对象
         Object startupInstance = startupClass.getConstructor().newInstance();
 
         // Set the shared extensions class loader
@@ -457,9 +482,10 @@ public final class Bootstrap {
     public static void main(String args[]) {
 
         if (daemon == null) {
-            // Don't set daemon until init() has completed
+            //实例化BootStrap
             Bootstrap bootstrap = new Bootstrap();
             try {
+                //初始化BootStrap
                 bootstrap.init();
             } catch (Throwable t) {
                 handleThrowable(t);
@@ -488,6 +514,7 @@ public final class Bootstrap {
                 args[args.length - 1] = "stop";
                 daemon.stop();
             } else if (command.equals("start")) {
+                //当命令是start，执行下面操作
                 daemon.setAwait(true);
                 daemon.load(args);
                 daemon.start();

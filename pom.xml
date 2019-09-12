@@ -65,19 +65,19 @@
     </dependencies>
 
     <build>
-        <finalName>tomcat</finalName>
-        <sourceDirectory>java</sourceDirectory>
-        <testSourceDirectory>test</testSourceDirectory>
-        <resources>
-            <resource>
-                <directory>java</directory>
-            </resource>
-        </resources>
-        <testResources>
-            <testResource>
-                <directory>test</directory>
-            </testResource>
-        </testResources>
+        <!--<finalName>tomcat</finalName>-->
+        <!--<sourceDirectory>java</sourceDirectory>-->
+        <!--<testSourceDirectory>test</testSourceDirectory>-->
+        <!--<resources>-->
+        <!--    <resource>-->
+        <!--        <directory>java</directory>-->
+        <!--    </resource>-->
+        <!--</resources>-->
+        <!--<testResources>-->
+        <!--    <testResource>-->
+        <!--        <directory>test</directory>-->
+        <!--    </testResource>-->
+        <!--</testResources>-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
