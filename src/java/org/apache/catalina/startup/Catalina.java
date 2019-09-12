@@ -526,6 +526,8 @@ public class Catalina {
 
 
     /**
+     * 会去初始化一些资源，优先加载conf/server.xml，找不到再去加载server-embed.xml；
+     * 此外，load方法还会初始化Server
      * Start a new server instance.
      */
     public void load() {
@@ -537,14 +539,16 @@ public class Catalina {
 
         long t1 = System.nanoTime();
 
+        //初始化目录
         initDirs();
 
-        // Before digester - it may be needed
+        //初始化命名空间
         initNaming();
 
-        // Create and execute our Digester
+        //解析器，解析Server.xml文件
         Digester digester = createStartDigester();
 
+        //读取Server.xml文件
         InputSource inputSource = null;
         InputStream inputStream = null;
         File file = null;
@@ -608,6 +612,8 @@ public class Catalina {
             try {
                 inputSource.setByteStream(inputStream);
                 digester.push(this);
+
+                //开始解析Server.xml文件
                 digester.parse(inputSource);
             } catch (SAXParseException spe) {
                 log.warn("Catalina.start using " + getConfigFile() + ": " +
@@ -627,6 +633,7 @@ public class Catalina {
             }
         }
 
+        //设置server的Catalina等信息
         getServer().setCatalina(this);
         getServer().setCatalinaHome(Bootstrap.getCatalinaHomeFile());
         getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());
@@ -636,6 +643,8 @@ public class Catalina {
 
         // Start the new server
         try {
+
+            //初始化Server
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -685,6 +694,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            //启动Server
             getServer().start();
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);
@@ -701,7 +711,7 @@ public class Catalina {
             log.info("Server startup in " + ((t2 - t1) / 1000000) + " ms");
         }
 
-        // Register shutdown hook
+        // Register shutdown hook 钩子
         if (useShutdownHook) {
             if (shutdownHook == null) {
                 shutdownHook = new CatalinaShutdownHook();

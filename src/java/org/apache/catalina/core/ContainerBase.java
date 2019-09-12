@@ -919,6 +919,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         // Start our subordinate components, if any
         logger = null;
         getLogger();
+        //有集群启动集群
         Cluster cluster = getClusterInternal();
         if (cluster instanceof Lifecycle) {
             ((Lifecycle) cluster).start();
@@ -928,6 +929,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             ((Lifecycle) realm).start();
         }
 
+        //启动子容器 StandardHost, StandardContext, StandardWrapper
         // Start our child containers, if any
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
@@ -937,6 +939,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         MultiThrowable multiThrowable = null;
 
+        //开启线程启动子容器
         for (Future<Void> result : results) {
             try {
                 result.get();
@@ -954,14 +957,16 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     multiThrowable.getThrowable());
         }
 
+        //启用Pipeline
         // Start the Valves in our pipeline (including the basic), if any
         if (pipeline instanceof Lifecycle) {
             ((Lifecycle) pipeline).start();
         }
 
-
+        //设置生命周期的状态
         setState(LifecycleState.STARTING);
 
+        //开启线程
         // Start our thread
         threadStart();
     }

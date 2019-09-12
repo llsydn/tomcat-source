@@ -416,6 +416,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             log.info(sm.getString("standardService.start.name", this.name));
         setState(LifecycleState.STARTING);
 
+        //启动engine
         // Start our defined Container first
         if (engine != null) {
             synchronized (engine) {
@@ -429,6 +430,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
         }
 
+        //启动mapperListener
         mapperListener.start();
 
         // Start our defined Connectors second
@@ -437,6 +439,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 try {
                     // If it has already failed, don't try and start it
                     if (connector.getState() != LifecycleState.FAILED) {
+                        //启动connector
                         connector.start();
                     }
                 } catch (Exception e) {
@@ -530,10 +533,12 @@ public class StandardService extends LifecycleMBeanBase implements Service {
 
         super.initInternal();
 
+        //初始化engine
         if (engine != null) {
             engine.init();
         }
 
+        //初始化线程池
         // Initialize any Executors
         for (Executor executor : findExecutors()) {
             if (executor instanceof JmxEnabled) {
@@ -542,6 +547,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             executor.init();
         }
 
+        //初始化mapper映射监听器
         // Initialize mapper listener
         mapperListener.init();
 
@@ -549,6 +555,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         synchronized (connectorsLock) {
             for (Connector connector : connectors) {
                 try {
+                    //初始化connector
                     connector.init();
                 } catch (Exception e) {
                     String message = sm.getString(

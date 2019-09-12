@@ -153,10 +153,12 @@ public final class Bootstrap {
      */
     private Object catalinaDaemon = null;
 
-
+    //双亲委派机制：BootStrap ClassLoader --> Ext ClassLoader --> System ClassLoader
+    //tomcat就打破了这个机制，commonLoader作为最高级父类加载器，就不再往上去加载了
+    //tomcat的三个类加载器，都是URLClassLoader的子类。
     ClassLoader commonLoader = null;
     ClassLoader catalinaLoader = null;
-    ClassLoader sharedLoader = null;
+    ClassLoader sharedLoader = null;    //web应用类加载器（WEB-INF/classes,lib;Webapps）
 
 
     // -------------------------------------------------------- Private Methods
@@ -164,11 +166,13 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
+            //commonLoader的父类加载器就设置为null，即打破了双亲委派机制。
             commonLoader = createClassLoader("common", null);
             if( commonLoader == null ) {
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader=this.getClass().getClassLoader();
             }
+            //catalinaLoader和sharedLoader，的父类加载器设置为commonLoader
             catalinaLoader = createClassLoader("server", commonLoader);
             sharedLoader = createClassLoader("shared", commonLoader);
         } catch (Throwable t) {
@@ -291,7 +295,7 @@ public final class Bootstrap {
         //使用Catalina类的构造方法，创建Catalina实例对象
         Object startupInstance = startupClass.getConstructor().newInstance();
 
-        // Set the shared extensions class loader
+        //执行Catalina的setParentClassLoader方法，设置父类加载器
         if (log.isDebugEnabled())
             log.debug("Setting startup class properties");
         String methodName = "setParentClassLoader";
@@ -303,6 +307,7 @@ public final class Bootstrap {
             startupInstance.getClass().getMethod(methodName, paramTypes);
         method.invoke(startupInstance, paramValues);
 
+        //设置catalinaDaemon
         catalinaDaemon = startupInstance;
 
     }
@@ -327,6 +332,7 @@ public final class Bootstrap {
             param = new Object[1];
             param[0] = arguments;
         }
+        //执行catalina的load()方法。
         Method method =
             catalinaDaemon.getClass().getMethod(methodName, paramTypes);
         if (log.isDebugEnabled())
@@ -515,9 +521,9 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 //当命令是start，执行下面操作
-                daemon.setAwait(true);
-                daemon.load(args);
-                daemon.start();
+                daemon.setAwait(true); //为了让tomcat在关闭端口阻塞监听关闭命令
+                daemon.load(args);     //实际上调用catalina.load()方法,初始化server，service，engine，executor，connector
+                daemon.start();        //实际上调用catalina.start()方法,启动server，service，engine，executor，connector;Host,Context,Wrapper
                 if (null == daemon.getServer()) {
                     System.exit(1);
                 }
