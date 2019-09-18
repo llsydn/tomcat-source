@@ -7,8 +7,10 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="tomcat" />
-        <module name="tomcat-source" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="tomcat" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
